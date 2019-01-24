@@ -21,16 +21,28 @@ const styles = {
     justifyContent: 'center',
   },
   header: {
-    marginTop: 100,
+    backgroundImage: 'linear-gradient(to top, #00ffff, #00d6ff, #00a9ff, #0077f7, #4537c6)',
+    paddingTop: 100,
     marginBottom: 50,
+  },
+  headerTitle: {
+    marginBottom: 50,
+    color: '#fff'
   },
   input: {
     width: '50%',
     marginBottom: 100,
   },
   movieCard: {
-    height: 400,
+    height: 'auto',
     width: 200,
+    cursor: 'pointer',
+    boxShadow: '0px 1px 34px -1px rgba(0,0,0,0.75)',
+    transition: 'transform .1s',
+    '&:hover': {
+      boxShadow: '0 0 11px rgba(33,33,33,.2)',
+      transform: 'scale(1.05)',
+    },
   },
   poster: {
     height: 300,
@@ -47,6 +59,7 @@ class MovieSearch extends Component {
       movieInfo: {},
       videos: [],
       showMovieInfo: false,
+      isLoading: false,
       showInfoDialog: false,
       infoVariant: 'info',
       infoMessage: '',
@@ -77,10 +90,11 @@ class MovieSearch extends Component {
         }
       })
       .catch(err => {
-        if (err.response.status === 400) {
+        console.log(err);
+        if (err.response && err.response.status === 400) {
           console.log('error occurred, res: ', err);
           this.showInfoDialog('error', 'Unexpected Error');
-        } else if (err.response.status === 500) {
+        } else if (err.response && err.response.status === 500) {
           console.log('error occurred, res: ', err);
           this.showInfoDialog('error', 'Server Error');
         } else {
@@ -93,6 +107,7 @@ class MovieSearch extends Component {
   }
 
   getMovieInfo = (id, title, year) => {
+    this.setState({ showMovieInfo: true, isLoading: true });
     const postData = {
       id,
       title,
@@ -102,9 +117,9 @@ class MovieSearch extends Component {
     .then(res => {
       if (res.status === 200 && res.data.result === 'ok') {
         this.setState({
-          movieInfo: res.data.data,
-          videos: res.data.videos.items,
-          showMovieInfo: true,
+          movieInfo: res.data.data.info,
+          videos: res.data.data.videos.items,
+          isLoading: false,
         });
       } else if (res.status === 200 && res.data.result !== 'ok') {
         this.showInfoDialog('info', res.data.result);
@@ -114,10 +129,10 @@ class MovieSearch extends Component {
       }
     })
     .catch(err => {
-      if (err.response.status === 400) {
+      if (err.response && err.response.status === 400) {
         console.log('error occurred, res: ', err);
         this.showInfoDialog('error', 'Unexpected Error');
-      } else if (err.response.status === 500) {
+      } else if (err.response && err.response.status === 500) {
         console.log('error occurred, res: ', err);
         this.showInfoDialog('error', 'Server Error');
       } else {
@@ -154,36 +169,39 @@ class MovieSearch extends Component {
         <Grid item key={elem.imdbID}>
           <div className={classes.movieCard} onClick={() => this.getMovieInfo(elem.imdbID, elem.Title, elem.Year)}>
             <img src={elem.Poster} alt={elem.Title} className={classes.poster} />
-            <Typography>{elem.Title}</Typography>
-            <Typography>{`Year: ${elem.Year}`}</Typography>
+            <Typography><b>{elem.Title}</b></Typography>
+            <Typography><b>{`Year: ${elem.Year}`}</b></Typography>
           </div>
         </Grid>
       );
     });
     return (
       <div className={classes.root}>
-        <Typography variant="title" className={classes.header}>Search for a movie</Typography>
-        <TextField
-          autoFocus
-          fullWidth
-          name="search"
-          onChange={this.handleInputSearchQuery}
-          onKeyDown={this.getResults}
-          placeholder="Enter the name of a movie"
-          value={this.state.searchQuery}
-          variant="outlined"
-          InputProps={{
-            startAdornment: <InputAdornment position="start"><Icon color="action">search</Icon></InputAdornment>,
-            endAdornment: <InputAdornment position="end"><Button size="small" onClick={this.getResults}>Search</Button></InputAdornment>
-          }}
-          className={classes.input}
-        />
+        <div className={classes.header}>
+          <Typography variant="h2" className={classes.headerTitle}>MovieSearch</Typography>
+          <TextField
+            autoFocus
+            fullWidth
+            name="search"
+            onChange={this.handleInputSearchQuery}
+            onKeyDown={this.getResults}
+            placeholder="Enter the name of a movie"
+            value={this.state.searchQuery}
+            variant="outlined"
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><Icon color="action">search</Icon></InputAdornment>,
+              endAdornment: <InputAdornment position="end"><Button size="small" onClick={this.getResults}>Search</Button></InputAdornment>
+            }}
+            className={classes.input}
+          />
+        </div>
         <Grid container spacing={24} className={classes.container}>{movieCards}</Grid>
         <MovieDialog
           open={this.state.showMovieInfo}
           onClose={this.closeDialog}
           info={this.state.movieInfo}
           videos={this.state.videos}
+          isLoading={this.state.isLoading}
         />
         <InfoDialog
           open={this.state.showInfoDialog}
