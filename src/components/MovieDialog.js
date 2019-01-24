@@ -42,7 +42,6 @@ const styles = {
   socialButton: {
     height: 20,
     width: 120,
-    padding: 5,
     color: '#fff',
     textDecoration: 'none',
     fontSize: 12,
