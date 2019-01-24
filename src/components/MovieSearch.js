@@ -90,7 +90,6 @@ class MovieSearch extends Component {
         }
       })
       .catch(err => {
-        console.log(err);
         if (err.response && err.response.status === 400) {
           console.log('error occurred, res: ', err);
           this.showInfoDialog('error', 'Unexpected Error');
